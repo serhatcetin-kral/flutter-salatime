@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+import '../models/calculation_method.dart';
+import '../models/madhhab_type.dart';
+import '../models/settings_models.dart';
 import '../services/location_service.dart';
 import '../services/prayer_api_service.dart';
+import '../services/settings_service.dart';
+import 'settings_screen.dart';
 
 class PrayerScreen extends StatefulWidget {
   const PrayerScreen({super.key});
@@ -14,20 +21,45 @@ class _PrayerScreenState extends State<PrayerScreen> {
   bool loading = true;
   String? error;
 
+  late SettingsModel settings;
+
   @override
   void initState() {
     super.initState();
-    loadPrayerTimes();
+    loadSettingsAndPrayerTimes();
   }
 
-  Future<void> loadPrayerTimes() async {
+  Future<void> loadSettingsAndPrayerTimes() async {
+    setState(() {
+      loading = true;
+      error = null;
+    });
+
     try {
+      // Load settings
+      settings = await SettingsService.loadSettings();
+
+      // Get location
       final position = await LocationService.getUserLocation();
-      final times =
-      await PrayerApiService.getPrayerTimes(position.latitude, position.longitude);
+
+      // Get prayer times
+      final times = await PrayerApiService.getPrayerTimes(
+        latitude: position.latitude,
+        longitude: position.longitude,
+        method: getMethodId(settings.method),
+        school: settings.madhab.schoolValue,
+        offsetMinutes: settings.offsetMinutes,
+      );
+
+      // Force 24-hour format
+      final Map<String, String> formatted = {};
+      times.forEach((k, v) {
+        final parsed = DateFormat('HH:mm').parse(v);
+        formatted[k] = DateFormat('HH:mm').format(parsed);
+      });
 
       setState(() {
-        prayerTimes = times;
+        prayerTimes = formatted;
         loading = false;
       });
     } catch (e) {
@@ -41,7 +73,22 @@ class _PrayerScreenState extends State<PrayerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Prayer Times")),
+      appBar: AppBar(
+        title: const Text("Prayer Times"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+              // Refresh after returning from settings
+              loadSettingsAndPrayerTimes();
+            },
+          )
+        ],
+      ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : error != null
@@ -51,10 +98,15 @@ class _PrayerScreenState extends State<PrayerScreen> {
         children: prayerTimes!.entries.map((entry) {
           return Card(
             child: ListTile(
-              title: Text(entry.key,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold)),
-              trailing: Text(entry.value, style: const TextStyle(fontSize: 18)),
+              title: Text(
+                entry.key,
+                style: const TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              trailing: Text(
+                entry.value,
+                style: const TextStyle(fontSize: 18),
+              ),
             ),
           );
         }).toList(),
