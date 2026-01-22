@@ -3,11 +3,9 @@ import 'package:intl/intl.dart';
 
 import '../models/calculation_method.dart';
 import '../models/madhhab_type.dart';
-import '../models/settings_models.dart';
 import '../services/location_service.dart';
 import '../services/prayer_api_service.dart';
 import '../services/settings_service.dart';
-import 'settings_screen.dart';
 
 class PrayerScreen extends StatefulWidget {
   const PrayerScreen({super.key});
@@ -21,7 +19,9 @@ class _PrayerScreenState extends State<PrayerScreen> {
   bool loading = true;
   String? error;
 
-  late SettingsModel settings;
+  late CalculationMethod selectedMethod;
+  late MadhhabType selectedMadhab;
+  late int offsetMinutes;
 
   @override
   void initState() {
@@ -30,28 +30,24 @@ class _PrayerScreenState extends State<PrayerScreen> {
   }
 
   Future<void> loadSettingsAndPrayerTimes() async {
-    setState(() {
-      loading = true;
-      error = null;
-    });
-
     try {
-      // Load settings
-      settings = await SettingsService.loadSettings();
+      final settings = await SettingsService.loadSettings();
 
-      // Get location
+      selectedMethod = settings.method;
+      selectedMadhab = settings.madhab;
+      offsetMinutes = settings.offsetMinutes;
+
       final position = await LocationService.getUserLocation();
 
-      // Get prayer times
       final times = await PrayerApiService.getPrayerTimes(
         latitude: position.latitude,
         longitude: position.longitude,
-        method: getMethodId(settings.method),
-        school: settings.madhab.schoolValue,
-        offsetMinutes: settings.offsetMinutes,
+        method: getMethodId(selectedMethod),
+        school: selectedMadhab.schoolValue,
+        offsetMinutes: offsetMinutes,
       );
 
-      // Force 24-hour format
+      // ⚙️ Force 24-hour format
       final Map<String, String> formatted = {};
       times.forEach((k, v) {
         final parsed = DateFormat('HH:mm').parse(v);
@@ -79,18 +75,33 @@ class _PrayerScreenState extends State<PrayerScreen> {
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsScreen()),
-              );
-              // Refresh after returning from settings
-              loadSettingsAndPrayerTimes();
+              await Navigator.pushNamed(context, '/settings');
+
+              // 🔁 After returning from Settings, reload prayer times
+              setState(() {
+                loading = true;
+                error = null;
+              });
+
+              await loadSettingsAndPrayerTimes();
             },
-          )
+          ),
         ],
       ),
       body: loading
-          ? const Center(child: CircularProgressIndicator())
+          ? Container(
+        color: Colors.teal, // 🔹 turquoise background
+        child: const Center(
+          child: Text(
+            "Location gathering...",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      )
           : error != null
           ? Center(child: Text(error!))
           : ListView(

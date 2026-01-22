@@ -1,20 +1,32 @@
 name: salah_prayer_time
-description: "A new Flutter project."
+description: "Simple and modern Salah prayer time app"
 publish_to: 'none'
 
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.10.7
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
+
+  # NETWORK & DATA
   http: ^1.1.0
-  geolocator: ^9.0.2
   intl: ^0.20.2
   shared_preferences: ^2.2.0
+
+  # LOCATION
+  geolocator: ^9.0.2
+
+  # GOOGLE MAPS (QIBLA FINDER)
+  google_maps_flutter: ^2.4.0
+  flutter_polyline_points: ^3.1.0
+
+  # UI
   cupertino_icons: ^1.0.8
+
+  # SPLASH
   flutter_native_splash: ^2.2.16
 
 dev_dependencies:
@@ -29,15 +41,15 @@ flutter:
   assets:
     - assets/
 
-flutter_native_splash:
-  color: "#2EC4B6"
-  android: true
-  ios: true
-  web: false
-
+# APP ICON
 flutter_icons:
   android: true
   ios: true
   image_path: "assets/app_icon.png"
 
-
+# SPLASH SCREEN
+flutter_native_splash:
+  color: "#2EC4B6"
+  image: assets/splash_logo.png
+  android: true
+  ios: true

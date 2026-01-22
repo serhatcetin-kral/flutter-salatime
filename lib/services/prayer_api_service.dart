@@ -9,6 +9,7 @@ class PrayerApiService {
     required int school,
     required int offsetMinutes,
   }) async {
+
     final url =
         'https://api.aladhan.com/v1/timings'
         '?latitude=$latitude'
@@ -28,7 +29,10 @@ class PrayerApiService {
     data.forEach((key, value) {
       final parts = value.split(':');
       int hour = int.parse(parts[0]);
-      int minute = int.parse(parts[1]) + offsetMinutes;
+      int minute = int.parse(parts[1]);
+
+      // REMOVE OFFSET FOR TESTING
+      // minute = minute + offsetMinutes;
 
       hour = (hour + minute ~/ 60) % 24;
       minute = minute % 60;
