@@ -6,6 +6,8 @@ import '../models/madhhab_type.dart';
 import '../services/location_service.dart';
 import '../services/prayer_api_service.dart';
 import '../services/settings_service.dart';
+import '../services/notification_service.dart';
+import '../services/time_helper.dart';
 
 class PrayerScreen extends StatefulWidget {
   const PrayerScreen({super.key});
@@ -47,7 +49,30 @@ class _PrayerScreenState extends State<PrayerScreen> {
         offsetMinutes: offsetMinutes,
       );
 
-      // ⚙️ Force 24-hour format
+      // Cancel old notifications
+      await NotificationService.cancelAll();
+
+      // Schedule notifications for future prayer times
+      times.forEach((prayerName, prayerTime) {
+        final parsed = DateFormat('HH:mm').parse(prayerTime);
+
+        final scheduled = nextOccurrence(DateTime(
+          DateTime.now().year,
+          DateTime.now().month,
+          DateTime.now().day,
+          parsed.hour,
+          parsed.minute,
+        ));
+
+        NotificationService.scheduleNotification(
+          id: prayerName.hashCode,
+          title: "Prayer Time",
+          body: "$prayerName is now",
+          scheduledDate: scheduled,
+        );
+      });
+
+      // Force 24-hour format
       final Map<String, String> formatted = {};
       times.forEach((k, v) {
         final parsed = DateFormat('HH:mm').parse(v);
@@ -77,7 +102,6 @@ class _PrayerScreenState extends State<PrayerScreen> {
             onPressed: () async {
               await Navigator.pushNamed(context, '/settings');
 
-              // 🔁 After returning from Settings, reload prayer times
               setState(() {
                 loading = true;
                 error = null;
@@ -90,7 +114,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
       ),
       body: loading
           ? Container(
-        color: Colors.teal, // 🔹 turquoise background
+        color: Colors.teal,
         child: const Center(
           child: Text(
             "Location gathering...",

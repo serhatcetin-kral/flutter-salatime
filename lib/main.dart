@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'services/notification_service.dart';
 import 'screens/prayer_screen.dart';
 import 'screens/settings_screen.dart';
-import 'screens/splash_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize notifications
+  await NotificationService.init();
+
   runApp(const MyApp());
 }
 
@@ -14,15 +19,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Sala Times',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.teal,
-      ),
+      title: 'Salat Times',
+      debugShowCheckedModeBanner: false, // removes DEBUG banner
       initialRoute: '/',
       routes: {
-        '/': (context) => const SplashScreen(),     // Splash first
-        '/prayer': (context) => const PrayerScreen(),
+        '/': (context) => const PrayerScreen(),
         '/settings': (context) => const SettingsScreen(),
       },
     );
