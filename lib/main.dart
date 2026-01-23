@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'services/notification_service.dart';
 import 'screens/prayer_screen.dart';
 import 'screens/settings_screen.dart';
@@ -20,7 +19,24 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Salat Times',
-      debugShowCheckedModeBanner: false, // removes DEBUG banner
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primaryColor: Colors.teal,
+        scaffoldBackgroundColor: Colors.white,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.teal,
+          elevation: 0,
+        ),
+        textTheme: const TextTheme(
+          titleLarge: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+          bodyLarge: TextStyle(
+            color: Colors.black,
+          ),
+        ),
+      ),
       initialRoute: '/',
       routes: {
         '/': (context) => const PrayerScreen(),

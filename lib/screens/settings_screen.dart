@@ -12,9 +12,9 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  CalculationMethod selectedMethod = CalculationMethod.isna;
-  MadhhabType selectedMadhab = MadhhabType.shafiGroup;
-  int offsetMinutes = 0;
+  late CalculationMethod selectedMethod;
+  late MadhhabType selectedMadhab;
+  late int offsetMinutes;
 
   @override
   void initState() {
@@ -45,62 +45,123 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Settings")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            const Text("Calculation Method"),
-            DropdownButton<CalculationMethod>(
-              value: selectedMethod,
-              items: CalculationMethod.values.map((method) {
-                return DropdownMenuItem(
-                  value: method,
-                  child: Text(method.name),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  selectedMethod = value!;
-                });
-              },
+      appBar: AppBar(
+        title: const Text("Settings"),
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF0D6E6A), Color(0xFF2BC4C0)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
             ),
-            const SizedBox(height: 20),
-            const Text("Madhhab"),
-            DropdownButton<MadhhabType>(
-              value: selectedMadhab,
-              items: MadhhabType.values.map((madhab) {
-                return DropdownMenuItem(
-                  value: madhab,
-                  child: Text(madhab.nameText),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  selectedMadhab = value!;
-                });
-              },
+            elevation: 8,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  const Text(
+                    "Prayer Settings",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Calculation method dropdown
+                  DropdownButtonFormField<CalculationMethod>(
+                    value: selectedMethod,
+                    decoration: const InputDecoration(
+                      labelText: "Calculation Method",
+                      border: OutlineInputBorder(),
+                    ),
+                    items: CalculationMethod.values.map((method) {
+                      return DropdownMenuItem(
+                        value: method,
+                        child: Text(method.name),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedMethod = value!;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Madhhab dropdown
+                  DropdownButtonFormField<MadhhabType>(
+                    value: selectedMadhab,
+                    decoration: const InputDecoration(
+                      labelText: "Madhhab",
+                      border: OutlineInputBorder(),
+                    ),
+                    items: MadhhabType.values.map((madhab) {
+                      return DropdownMenuItem(
+                        value: madhab,
+                        child: Text(madhab.name),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedMadhab = value!;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Offset slider
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text("Offset (minutes)"),
+                      Text("$offsetMinutes min"),
+                    ],
+                  ),
+                  Slider(
+                    value: offsetMinutes.toDouble(),
+                    min: 0,
+                    max: 60,
+                    divisions: 12,
+                    label: "$offsetMinutes",
+                    onChanged: (value) {
+                      setState(() {
+                        offsetMinutes = value.toInt();
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  ElevatedButton(
+                    onPressed: saveSettings,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 40, vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      "Save Settings",
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 20),
-            const Text("Offset Minutes (all prayers)"),
-            Slider(
-              value: offsetMinutes.toDouble(),
-              min: -60,
-              max: 60,
-              divisions: 120,
-              label: offsetMinutes.toString(),
-              onChanged: (value) {
-                setState(() {
-                  offsetMinutes = value.toInt();
-                });
-              },
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: saveSettings,
-              child: const Text("Save Settings"),
-            ),
-          ],
+          ),
         ),
       ),
     );

@@ -91,8 +91,39 @@ class _PrayerScreenState extends State<PrayerScreen> {
     }
   }
 
+  String _nextPrayer(Map<String, String> times) {
+    final now = DateTime.now();
+    for (var entry in times.entries) {
+      final parsed = DateFormat('HH:mm').parse(entry.value);
+      final timeToday = DateTime(now.year, now.month, now.day, parsed.hour, parsed.minute);
+      if (timeToday.isAfter(now)) {
+        return entry.key;
+      }
+    }
+    return times.entries.first.key; // fallback
+  }
+
+  IconData _getIcon(String prayer) {
+    switch (prayer.toLowerCase()) {
+      case 'fajr':
+        return Icons.brightness_3;
+      case 'dhuhr':
+        return Icons.wb_sunny;
+      case 'asr':
+        return Icons.brightness_5;
+      case 'maghrib':
+        return Icons.nightlight_round;
+      case 'isha':
+        return Icons.nights_stay;
+      default:
+        return Icons.access_time;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final nextPrayer = prayerTimes != null ? _nextPrayer(prayerTimes!) : '';
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Prayer Times"),
@@ -112,39 +143,65 @@ class _PrayerScreenState extends State<PrayerScreen> {
           ),
         ],
       ),
-      body: loading
-          ? Container(
-        color: Colors.teal,
-        child: const Center(
-          child: Text(
-            "Location gathering...",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF0D6E6A), Color(0xFF2BC4C0)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
         ),
-      )
-          : error != null
-          ? Center(child: Text(error!))
-          : ListView(
-        padding: const EdgeInsets.all(16),
-        children: prayerTimes!.entries.map((entry) {
-          return Card(
-            child: ListTile(
-              title: Text(
-                entry.key,
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold),
+        child: loading
+            ? const Center(
+          child: CircularProgressIndicator(
+            color: Colors.white,
+          ),
+        )
+            : error != null
+            ? Center(
+          child: Text(
+            error!,
+            style: const TextStyle(color: Colors.white),
+          ),
+        )
+            : ListView(
+          padding: const EdgeInsets.all(16),
+          children: prayerTimes!.entries.map((entry) {
+            final isNext = entry.key == nextPrayer;
+            return Card(
+              elevation: isNext ? 8 : 3,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
               ),
-              trailing: Text(
-                entry.value,
-                style: const TextStyle(fontSize: 18),
+              color: isNext ? Colors.white : Colors.white70,
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: isNext ? Colors.teal : Colors.grey[200],
+                  child: Icon(
+                    _getIcon(entry.key),
+                    color: isNext ? Colors.white : Colors.black54,
+                  ),
+                ),
+                title: Text(
+                  entry.key,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isNext ? Colors.teal : Colors.black87,
+                  ),
+                ),
+                trailing: Text(
+                  entry.value,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isNext ? Colors.teal : Colors.black87,
+                  ),
+                ),
               ),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
