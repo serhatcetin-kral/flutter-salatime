@@ -95,7 +95,8 @@ class _PrayerScreenState extends State<PrayerScreen> {
     final now = DateTime.now();
     for (var entry in times.entries) {
       final parsed = DateFormat('HH:mm').parse(entry.value);
-      final timeToday = DateTime(now.year, now.month, now.day, parsed.hour, parsed.minute);
+      final timeToday = DateTime(
+          now.year, now.month, now.day, parsed.hour, parsed.minute);
       if (timeToday.isAfter(now)) {
         return entry.key;
       }
@@ -146,16 +147,14 @@ class _PrayerScreenState extends State<PrayerScreen> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF0D6E6A), Color(0xFF2BC4C0)],
+            colors: [Color(0xFF81D4FA), Color(0xFFB2EBF2)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
         ),
         child: loading
             ? const Center(
-          child: CircularProgressIndicator(
-            color: Colors.white,
-          ),
+          child: CircularProgressIndicator(color: Colors.white),
         )
             : error != null
             ? Center(
@@ -176,7 +175,8 @@ class _PrayerScreenState extends State<PrayerScreen> {
               color: isNext ? Colors.white : Colors.white70,
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: isNext ? Colors.teal : Colors.grey[200],
+                  backgroundColor:
+                  isNext ? Colors.teal : Colors.grey[200],
                   child: Icon(
                     _getIcon(entry.key),
                     color: isNext ? Colors.white : Colors.black54,

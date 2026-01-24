@@ -5,37 +5,41 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
+  sdk: ">=3.10.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
+
   flutter_local_notifications: ^17.1.2
   timezone: ^0.9.2
 
-  # NETWORK & DATA
   http: ^1.1.0
   intl: ^0.20.2
   shared_preferences: ^2.2.0
 
-  # LOCATION
   geolocator: ^9.0.2
 
-  # GOOGLE MAPS (QIBLA FINDER)
   google_maps_flutter: ^2.4.0
   flutter_polyline_points: ^3.1.0
 
-  # UI
   cupertino_icons: ^1.0.8
 
-  # SPLASH
-  flutter_native_splash: ^2.2.16
+#  flutter_native_splash: ^2.2.16
+#  flutter_native_splash:
+#  color: "#2EC4B6"
+#  image: assets/splash_logo.png
+#  android: true
+#  ios: true
+
+
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.2.16
 
 flutter:
   uses-material-design: true
@@ -43,13 +47,11 @@ flutter:
   assets:
     - assets/
 
-# APP ICON
 flutter_icons:
   android: true
   ios: true
   image_path: "assets/app_icon.png"
 
-# SPLASH SCREEN
 flutter_native_splash:
   color: "#2EC4B6"
   image: assets/splash_logo.png

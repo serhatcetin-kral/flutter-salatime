@@ -15,6 +15,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late CalculationMethod selectedMethod;
   late MadhhabType selectedMadhab;
   late int offsetMinutes;
+  bool is24Hour = true;
 
   @override
   void initState() {
@@ -28,6 +29,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       selectedMethod = settings.method;
       selectedMadhab = settings.madhab;
       offsetMinutes = settings.offsetMinutes;
+     // is24Hour = settings.is24Hour;
     });
   }
 
@@ -36,6 +38,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       method: selectedMethod,
       madhab: selectedMadhab,
       offsetMinutes: offsetMinutes,
+     // is24Hour: is24Hour,
     );
 
     await SettingsService.saveSettings(settings);
@@ -77,7 +80,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Calculation method dropdown
                   DropdownButtonFormField<CalculationMethod>(
                     value: selectedMethod,
                     decoration: const InputDecoration(
@@ -99,7 +101,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Madhhab dropdown
                   DropdownButtonFormField<MadhhabType>(
                     value: selectedMadhab,
                     decoration: const InputDecoration(
@@ -121,7 +122,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Offset slider
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -141,6 +141,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       });
                     },
                   ),
+
+                  const SizedBox(height: 16),
+
+                  // SwitchListTile(
+                  //   value: is24Hour,
+                  //   title: const Text("24-Hour Format"),
+                  //   onChanged: (value) {
+                  //     setState(() {
+                  //       is24Hour = value;
+                  //     });
+                  //   },
+                  // ),
 
                   const SizedBox(height: 20),
 
