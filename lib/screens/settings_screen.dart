@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/calculation_method.dart';
 import '../models/madhhab_type.dart';
 import '../models/settings_models.dart';
 import '../services/settings_service.dart';
+import '../services/notification_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -15,7 +18,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late CalculationMethod selectedMethod;
   late MadhhabType selectedMadhab;
   late int offsetMinutes;
-  bool is24Hour = true;
+
+  bool notificationsEnabled = true;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -25,11 +30,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> loadSettings() async {
     final settings = await SettingsService.loadSettings();
+    final prefs = await SharedPreferences.getInstance();
+
     setState(() {
       selectedMethod = settings.method;
       selectedMadhab = settings.madhab;
       offsetMinutes = settings.offsetMinutes;
-     // is24Hour = settings.is24Hour;
+      notificationsEnabled =
+          prefs.getBool('notifications_enabled') ?? true;
+      _isLoading = false;
     });
   }
 
@@ -38,15 +47,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
       method: selectedMethod,
       madhab: selectedMadhab,
       offsetMinutes: offsetMinutes,
-     // is24Hour: is24Hour,
     );
 
     await SettingsService.saveSettings(settings);
-    Navigator.pop(context);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notifications_enabled', notificationsEnabled);
+
+    if (notificationsEnabled) {
+      await NotificationService.scheduleAllPrayerNotifications();
+    } else {
+      await NotificationService.cancelAllNotifications();
+    }
+
+    if (mounted) {
+      Navigator.pop(context);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Settings"),
@@ -144,23 +170,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   const SizedBox(height: 16),
 
-                  // SwitchListTile(
-                  //   value: is24Hour,
-                  //   title: const Text("24-Hour Format"),
-                  //   onChanged: (value) {
-                  //     setState(() {
-                  //       is24Hour = value;
-                  //     });
-                  //   },
-                  // ),
+                  SwitchListTile(
+                    value: notificationsEnabled,
+                    title: const Text("Prayer Notifications"),
+                    subtitle: const Text(
+                      "Receive reminders at prayer times",
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        notificationsEnabled = value;
+                      });
+                    },
+                  ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
                   ElevatedButton(
                     onPressed: saveSettings,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 40, vertical: 14),
+                        horizontal: 40,
+                        vertical: 14,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),

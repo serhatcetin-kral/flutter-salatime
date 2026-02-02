@@ -10,34 +10,37 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  hijri: ^3.0.0
+  table_calendar: ^3.1.2
 
+
+    # 🌍 Localization
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
+
+  # 🔔 Notifications
   flutter_local_notifications: ^17.1.2
   timezone: ^0.9.2
 
+  # 🌐 Network & storage
   http: ^1.1.0
-  intl: ^0.20.2
   shared_preferences: ^2.2.0
 
+  # 📍 Location & Maps
   geolocator: ^9.0.2
-
   google_maps_flutter: ^2.4.0
   flutter_polyline_points: ^3.1.0
 
+  # 🍎 iOS icons
   cupertino_icons: ^1.0.8
-
-#  flutter_native_splash: ^2.2.16
-#  flutter_native_splash:
-#  color: "#2EC4B6"
-#  image: assets/splash_logo.png
-#  android: true
-#  ios: true
-
-
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+
+  # 🎨 App icons & splash
   flutter_launcher_icons: ^0.14.4
   flutter_native_splash: ^2.2.16
 
@@ -47,11 +50,13 @@ flutter:
   assets:
     - assets/
 
+# 🎯 App launcher icons
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/app_icon.png"
+  image_path: assets/app_icon.png
 
+# 💦 Splash screen
 flutter_native_splash:
   color: "#2EC4B6"
   image: assets/splash_logo.png

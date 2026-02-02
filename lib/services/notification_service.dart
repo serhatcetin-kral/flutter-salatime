@@ -7,14 +7,11 @@ class NotificationService {
   FlutterLocalNotificationsPlugin();
 
   static Future<void> init() async {
-    // Initialize timezone database
     tz.initializeTimeZones();
 
-    // Android initialization
     const AndroidInitializationSettings initializationSettingsAndroid =
     AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // iOS / macOS initialization (Darwin)
     final DarwinInitializationSettings initializationSettingsIOS =
     DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -22,7 +19,6 @@ class NotificationService {
       requestSoundPermission: true,
     );
 
-    // Combined initialization
     final InitializationSettings initializationSettings =
     InitializationSettings(
       android: initializationSettingsAndroid,
@@ -31,7 +27,6 @@ class NotificationService {
 
     await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
-    // Request iOS permissions
     await flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
         IOSFlutterLocalNotificationsPlugin>()
@@ -42,10 +37,12 @@ class NotificationService {
     );
   }
 
-  static Future<void> cancelAll() async {
+  // 🔕 USED BY SETTINGS SCREEN
+  static Future<void> cancelAllNotifications() async {
     await flutterLocalNotificationsPlugin.cancelAll();
   }
 
+  // 🔔 SCHEDULE SINGLE NOTIFICATION
   static Future<void> scheduleNotification({
     required int id,
     required String title,
@@ -70,6 +67,50 @@ class NotificationService {
       androidAllowWhileIdle: true,
       uiLocalNotificationDateInterpretation:
       UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.time, // 🔁 daily
+    );
+  }
+
+  // 🔔 USED BY SETTINGS SCREEN
+  static Future<void> scheduleAllPrayerNotifications() async {
+    // ⚠️ TEMP EXAMPLE — replace with real prayer times
+    final now = DateTime.now();
+
+    await cancelAllNotifications();
+
+    await scheduleNotification(
+      id: 1,
+      title: 'Prayer Time',
+      body: 'It’s time for Fajr',
+      scheduledDate: DateTime(now.year, now.month, now.day, 5, 0),
+    );
+
+    await scheduleNotification(
+      id: 2,
+      title: 'Prayer Time',
+      body: 'It’s time for Dhuhr',
+      scheduledDate: DateTime(now.year, now.month, now.day, 13, 0),
+    );
+
+    await scheduleNotification(
+      id: 3,
+      title: 'Prayer Time',
+      body: 'It’s time for Asr',
+      scheduledDate: DateTime(now.year, now.month, now.day, 17, 0),
+    );
+
+    await scheduleNotification(
+      id: 4,
+      title: 'Prayer Time',
+      body: 'It’s time for Maghrib',
+      scheduledDate: DateTime(now.year, now.month, now.day, 19, 30),
+    );
+
+    await scheduleNotification(
+      id: 5,
+      title: 'Prayer Time',
+      body: 'It’s time for Isha',
+      scheduledDate: DateTime(now.year, now.month, now.day, 21, 0),
     );
   }
 }
