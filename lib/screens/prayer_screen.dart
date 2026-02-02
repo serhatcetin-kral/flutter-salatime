@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
+import '../services/location_name_service.dart';
 import '../utils/hijri_utils.dart';
 import '../models/calculation_method.dart';
 import '../models/madhhab_type.dart';
@@ -23,6 +23,7 @@ class PrayerScreen extends StatefulWidget {
 class _PrayerScreenState extends State<PrayerScreen> {
   Map<String, String>? prayerTimes;
   bool loading = true;
+  String? locationName;
 
   // null = online or normal
   // "offline" = using cached data
@@ -63,6 +64,20 @@ class _PrayerScreenState extends State<PrayerScreen> {
       offsetMinutes = settings.offsetMinutes;
 
       final position = await LocationService.getUserLocation();
+      // locationName = await LocationNameService.getLocationName(
+      //   position.latitude,
+      //   position.longitude,
+      // );
+      final fetchedLocationName =
+      await LocationNameService.getLocationName(
+        position.latitude,
+        position.longitude,
+      );
+
+      setState(() {
+        locationName = fetchedLocationName;
+      });
+
 
       final times = await PrayerApiService.getPrayerTimes(
         latitude: position.latitude,
@@ -71,7 +86,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
         school: selectedMadhab.schoolValue,
         offsetMinutes: offsetMinutes,
       );
-
+      times.remove('Sunset');
       // 💾 Save for offline use
       await PrayerCacheService.savePrayerTimes(
         times,
@@ -254,6 +269,30 @@ class _PrayerScreenState extends State<PrayerScreen> {
                     fontSize: 13,
                   ),
                   textAlign: TextAlign.center,
+                ),
+              ),
+            // 📍 LOCATION NAME (ADD HERE)
+            if (locationName != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.location_on,
+                      size: 18,
+                      color: Colors.white70,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      locationName!,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
