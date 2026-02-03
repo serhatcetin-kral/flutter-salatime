@@ -10,6 +10,12 @@ class SettingsService {
     await prefs.setString('method', settings.method.name);
     await prefs.setString('madhab', settings.madhab.name);
     await prefs.setInt('offsetMinutes', settings.offsetMinutes);
+
+    // 🌙 NEW: Ramadan notifications toggle
+    await prefs.setBool(
+      'ramadanNotificationsEnabled',
+      settings.ramadanNotificationsEnabled,
+    );
   }
 
   static Future<SettingsModel> loadSettings() async {
@@ -18,6 +24,10 @@ class SettingsService {
     final methodName = prefs.getString('method') ?? 'isna';
     final madhabName = prefs.getString('madhab') ?? 'shafiGroup';
     final offset = prefs.getInt('offsetMinutes') ?? 0;
+
+    // 🌙 NEW: Load Ramadan notifications toggle
+    final ramadanEnabled =
+        prefs.getBool('ramadanNotificationsEnabled') ?? true;
 
     final method = CalculationMethod.values.firstWhere(
           (e) => e.name == methodName,
@@ -33,6 +43,7 @@ class SettingsService {
       method: method,
       madhab: madhab,
       offsetMinutes: offset,
+      ramadanNotificationsEnabled: ramadanEnabled,
     );
   }
 }

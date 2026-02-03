@@ -12,7 +12,8 @@ import '../services/settings_service.dart';
 import '../services/notification_service.dart';
 import '../services/prayer_cache_service.dart';
 import '../services/time_helper.dart';
-
+import '../utils/ramadan_utils.dart';
+//import 'package:flutter_islamic_icons/flutter_islamic_icons.dart';
 class PrayerScreen extends StatefulWidget {
   const PrayerScreen({super.key});
 
@@ -24,6 +25,28 @@ class _PrayerScreenState extends State<PrayerScreen> {
   Map<String, String>? prayerTimes;
   bool loading = true;
   String? locationName;
+
+  String? _getNextPrayerName(Map<String, String> times) {
+    final now = DateTime.now();
+
+    for (final entry in times.entries) {
+      final parsed = DateFormat('HH:mm').parse(entry.value);
+      final prayerTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        parsed.hour,
+        parsed.minute,
+      );
+
+      if (prayerTime.isAfter(now)) {
+        return entry.key;
+      }
+    }
+
+    // If all prayers passed → tomorrow's Fajr
+    return times.keys.first;
+  }
 
   // null = online or normal
   // "offline" = using cached data
@@ -95,6 +118,10 @@ class _PrayerScreenState extends State<PrayerScreen> {
 
       // 🔔 Notifications
       await NotificationService.cancelAllNotifications();
+      // 🔔 Notifications
+      await NotificationService.cancelAllNotifications();
+
+// 1️⃣ Prayer notifications
       times.forEach((prayerName, prayerTime) {
         final parsed = DateFormat('HH:mm').parse(prayerTime);
         final scheduled = nextOccurrence(DateTime(
@@ -108,10 +135,69 @@ class _PrayerScreenState extends State<PrayerScreen> {
         NotificationService.scheduleNotification(
           id: prayerName.hashCode,
           title: "Prayer Time",
-          body: "$prayerName is now",
+          body: "It is time for $prayerName prayer 🕌",
           scheduledDate: scheduled,
         );
+
       });
+
+// 2️⃣ 🌙 Ramadan notifications (ONCE, outside loop)
+      if (settings.ramadanNotificationsEnabled &&
+          RamadanUtils.isRamadanToday()) {
+
+        final now = DateTime.now();
+
+        // 🥣 Suhoor
+        if (times.containsKey("Fajr")) {
+          final fajrParsed = DateFormat('HH:mm').parse(times["Fajr"]!);
+          DateTime fajrTime = DateTime(
+            now.year,
+            now.month,
+            now.day,
+            fajrParsed.hour,
+            fajrParsed.minute,
+          );
+
+          if (fajrTime.isBefore(now)) {
+            fajrTime = fajrTime.add(const Duration(days: 1));
+          }
+
+          final suhoor = RamadanUtils.suhoorTime(fajrTime);
+
+          NotificationService.scheduleNotification(
+            id: 9001,
+            title: "Suhoor Reminder",
+            body: "Time for Suhoor 🌙",
+            scheduledDate: suhoor,
+          );
+        }
+
+        // 🌇 Iftar
+        if (times.containsKey("Maghrib")) {
+          final maghribParsed =
+          DateFormat('HH:mm').parse(times["Maghrib"]!);
+          DateTime maghribTime = DateTime(
+            now.year,
+            now.month,
+            now.day,
+            maghribParsed.hour,
+            maghribParsed.minute,
+          );
+
+          if (maghribTime.isBefore(now)) {
+            maghribTime = maghribTime.add(const Duration(days: 1));
+          }
+
+          NotificationService.scheduleNotification(
+            id: 9002,
+            title: "Iftar Time",
+            body: "It’s time to break your fast 🌇",
+            scheduledDate: maghribTime,
+          );
+        }
+      }
+
+
 
       setState(() {
         prayerTimes = times;
@@ -214,6 +300,9 @@ class _PrayerScreenState extends State<PrayerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final nextPrayerName =
+    prayerTimes != null ? _getNextPrayerName(prayerTimes!) : null;
+
     final locale = Localizations.localeOf(context).languageCode;
     final hijriDate = HijriUtils.getTodayHijriDate(locale: locale);
     final gregorianDate =
@@ -221,13 +310,32 @@ class _PrayerScreenState extends State<PrayerScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Prayer Times"),
+       // backgroundColor: Colors.white.withOpacity(0.12),
+        backgroundColor: Colors.lightGreen[300],
+
+        elevation: 0,
+        title: const Text(
+          "Prayer Times",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
+            tooltip: 'Calendar',
             icon: const Icon(Icons.calendar_month),
             onPressed: () => Navigator.pushNamed(context, '/calendar'),
           ),
           IconButton(
+            tooltip: 'Zikirmatik',
+            icon:const Icon(Icons.blur_circular),
+            // 🧿
+            onPressed: () => Navigator.pushNamed(context, '/zikr'),
+          ),
+          IconButton(
+            tooltip: 'Settings',
             icon: const Icon(Icons.settings),
             onPressed: () async {
               await Navigator.pushNamed(context, '/settings');
@@ -235,15 +343,24 @@ class _PrayerScreenState extends State<PrayerScreen> {
             },
           ),
         ],
+
       ),
+
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF81D4FA), Color(0xFFB2EBF2)],
+            colors: [
+              Color(0xFF102027), // deep night blue
+              Color(0xFF1E3C45), // teal-blue
+              Color(0xFF2E5964), // soft mosque night
+            ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
         ),
+
+
+
         child: loading
             ? const Center(
           child: CircularProgressIndicator(color: Colors.white),
@@ -258,6 +375,37 @@ class _PrayerScreenState extends State<PrayerScreen> {
             : ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            if (RamadanUtils.isRamadanToday())
+              Card(
+                elevation: 6,
+                color: const Color(0xFFFFF8E1),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    children: [
+                      const Text(
+                        "🌙 Ramadan Mubarak",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        "${RamadanUtils.remainingRamadanDays()} days remaining",
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
             // 📴 Offline banner
             if (status == "offline")
               const Padding(
@@ -323,28 +471,30 @@ class _PrayerScreenState extends State<PrayerScreen> {
             if (_nextPrayerName != null &&
                 _timeUntilNextPrayer != null)
               Card(
-                elevation: 6,
+                elevation: 10,
+                color: const Color(0xFFE0F2F1),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(22),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(18),
                   child: Column(
                     children: [
                       Text(
-                        "Next Prayer: $_nextPrayerName",
+                        "Next Prayer • $_nextPrayerName",
                         style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       Text(
                         _formatDuration(_timeUntilNextPrayer!),
                         style: const TextStyle(
-                          fontSize: 26,
+                          fontSize: 30,
                           fontWeight: FontWeight.bold,
                           color: Colors.teal,
+                          letterSpacing: 1.2,
                         ),
                       ),
                     ],
@@ -352,40 +502,56 @@ class _PrayerScreenState extends State<PrayerScreen> {
                 ),
               ),
 
+
+
             const SizedBox(height: 12),
 
             // 🕌 Prayer list
             ...prayerTimes!.entries.map((entry) {
+              final isNext = entry.key == nextPrayerName;
+
               return Card(
-                elevation: 3,
+                elevation: isNext ? 8 : 3,
+                color: isNext ? const Color(0xFFE0F2F1) : Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.teal,
+                  contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  leading: Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: isNext
+                          ? Colors.teal.withOpacity(0.25)
+                          : Colors.teal.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                     child: Icon(
                       _getIcon(entry.key),
-                      color: Colors.white,
+                      color: Colors.teal,
                     ),
                   ),
                   title: Text(
                     entry.key,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: isNext ? FontWeight.bold : FontWeight.w600,
                     ),
                   ),
                   trailing: Text(
                     entry.value,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: isNext ? FontWeight.bold : FontWeight.w600,
+                      color: isNext ? Colors.teal : Colors.black87,
                     ),
                   ),
                 ),
               );
             }).toList(),
+
           ],
         ),
       ),

@@ -7,6 +7,7 @@ import 'screens/prayer_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/splash_screen.dart';
 import 'services/notification_service.dart';
+import 'screens/zikr_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +39,8 @@ class MyApp extends StatelessWidget {
         '/prayerTime': (context) => const PrayerScreen(),
         '/settings': (context) => const SettingsScreen(),
         '/calendar': (context) => const CalendarScreen(),
+        '/zikr': (context) => const ZikrScreen(),
+
 
       },
     );

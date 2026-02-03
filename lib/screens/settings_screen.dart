@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/calculation_method.dart';
 import '../models/madhhab_type.dart';
 import '../models/settings_models.dart';
 import '../services/settings_service.dart';
-import '../services/notification_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -19,7 +17,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late MadhhabType selectedMadhab;
   late int offsetMinutes;
 
-  bool notificationsEnabled = true;
+  bool prayerNotificationsEnabled = true;
+  bool ramadanNotificationsEnabled = true;
+
   bool _isLoading = true;
 
   @override
@@ -30,14 +30,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> loadSettings() async {
     final settings = await SettingsService.loadSettings();
-    final prefs = await SharedPreferences.getInstance();
 
     setState(() {
       selectedMethod = settings.method;
       selectedMadhab = settings.madhab;
       offsetMinutes = settings.offsetMinutes;
-      notificationsEnabled =
-          prefs.getBool('notifications_enabled') ?? true;
+      ramadanNotificationsEnabled =
+          settings.ramadanNotificationsEnabled;
+
+      // Prayer notifications assumed ON by default
+      prayerNotificationsEnabled = true;
+
       _isLoading = false;
     });
   }
@@ -47,18 +50,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       method: selectedMethod,
       madhab: selectedMadhab,
       offsetMinutes: offsetMinutes,
+      ramadanNotificationsEnabled: ramadanNotificationsEnabled,
     );
 
     await SettingsService.saveSettings(settings);
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('notifications_enabled', notificationsEnabled);
-
-    if (notificationsEnabled) {
-      await NotificationService.scheduleAllPrayerNotifications();
-    } else {
-      await NotificationService.cancelAllNotifications();
-    }
 
     if (mounted) {
       Navigator.pop(context);
@@ -106,6 +101,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 20),
 
+                  // Calculation Method
                   DropdownButtonFormField<CalculationMethod>(
                     value: selectedMethod,
                     decoration: const InputDecoration(
@@ -127,6 +123,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   const SizedBox(height: 16),
 
+                  // Madhhab
                   DropdownButtonFormField<MadhhabType>(
                     value: selectedMadhab,
                     decoration: const InputDecoration(
@@ -148,6 +145,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   const SizedBox(height: 16),
 
+                  // Offset
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -170,15 +168,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   const SizedBox(height: 16),
 
+                  // 🔔 Prayer notifications
                   SwitchListTile(
-                    value: notificationsEnabled,
+                    value: prayerNotificationsEnabled,
                     title: const Text("Prayer Notifications"),
                     subtitle: const Text(
                       "Receive reminders at prayer times",
                     ),
                     onChanged: (value) {
                       setState(() {
-                        notificationsEnabled = value;
+                        prayerNotificationsEnabled = value;
+                      });
+                    },
+                  ),
+
+                  // 🌙 Ramadan notifications
+                  SwitchListTile(
+                    value: ramadanNotificationsEnabled,
+                    title: const Text("Ramadan Notifications"),
+                    subtitle: const Text(
+                      "Suhoor & Iftar reminders during Ramadan",
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        ramadanNotificationsEnabled = value;
                       });
                     },
                   ),
