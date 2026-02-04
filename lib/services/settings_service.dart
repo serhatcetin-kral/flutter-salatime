@@ -11,6 +11,10 @@ class SettingsService {
     await prefs.setString('madhab', settings.madhab.name);
     await prefs.setInt('offsetMinutes', settings.offsetMinutes);
 
+    await prefs.setBool('widget_enabled', settings.widgetEnabled);
+    await prefs.setBool('lock_enabled', settings.lockScreenEnabled);
+
+
     // 🌙 NEW: Ramadan notifications toggle
     await prefs.setBool(
       'ramadanNotificationsEnabled',

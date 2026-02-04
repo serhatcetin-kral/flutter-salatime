@@ -113,4 +113,30 @@ class NotificationService {
       scheduledDate: DateTime(now.year, now.month, now.day, 21, 0),
     );
   }
+  static Future<void> showPersistentNextPrayer({
+    required String prayer,
+    required String time,
+  }) async {
+    const AndroidNotificationDetails androidDetails =
+    AndroidNotificationDetails(
+      'next_prayer_channel',
+      'Next Prayer',
+      channelDescription: 'Shows upcoming prayer on lock screen',
+      importance: Importance.low,
+      priority: Priority.low,
+      ongoing: true,
+      showWhen: false,
+    );
+
+    const NotificationDetails details =
+    NotificationDetails(android: androidDetails);
+
+    await flutterLocalNotificationsPlugin.show(
+      9999,
+      'Next Prayer',
+      '$prayer at $time',
+      details,
+    );
+  }
+
 }

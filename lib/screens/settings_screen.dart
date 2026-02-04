@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/calculation_method.dart';
 import '../models/madhhab_type.dart';
@@ -18,6 +19,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late int offsetMinutes;
 
   bool prayerNotificationsEnabled = true;
+  bool widgetEnabled=false;
+  bool lockScreenEnabled=false;
   bool ramadanNotificationsEnabled = true;
 
   bool _isLoading = true;
@@ -30,20 +33,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> loadSettings() async {
     final settings = await SettingsService.loadSettings();
+    final prefs = await SharedPreferences.getInstance();
 
     setState(() {
       selectedMethod = settings.method;
       selectedMadhab = settings.madhab;
       offsetMinutes = settings.offsetMinutes;
+
       ramadanNotificationsEnabled =
           settings.ramadanNotificationsEnabled;
 
-      // Prayer notifications assumed ON by default
-      prayerNotificationsEnabled = true;
+      // Load switches safely
+      prayerNotificationsEnabled =
+          prefs.getBool('notifications_enabled') ?? true;
+
+      widgetEnabled =
+          prefs.getBool('widget_enabled') ?? false;
+
+      lockScreenEnabled =
+          prefs.getBool('lock_enabled') ?? false;
 
       _isLoading = false;
     });
   }
+
 
   Future<void> saveSettings() async {
     final settings = SettingsModel(
@@ -222,4 +235,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
+
+
 }

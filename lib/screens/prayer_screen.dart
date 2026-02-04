@@ -13,18 +13,23 @@ import '../services/notification_service.dart';
 import '../services/prayer_cache_service.dart';
 import '../services/time_helper.dart';
 import '../utils/ramadan_utils.dart';
-//import 'package:flutter_islamic_icons/flutter_islamic_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+
 class PrayerScreen extends StatefulWidget {
   const PrayerScreen({super.key});
 
   @override
   State<PrayerScreen> createState() => _PrayerScreenState();
+
 }
 
 class _PrayerScreenState extends State<PrayerScreen> {
+  bool lockScreenEnabled = false;
   Map<String, String>? prayerTimes;
   bool loading = true;
   String? locationName;
+
 
   String? _getNextPrayerName(Map<String, String> times) {
     final now = DateTime.now();
@@ -81,16 +86,18 @@ class _PrayerScreenState extends State<PrayerScreen> {
     });
 
     try {
+      // 1️⃣ Load settings
       final settings = await SettingsService.loadSettings();
       selectedMethod = settings.method;
       selectedMadhab = settings.madhab;
       offsetMinutes = settings.offsetMinutes;
 
+      // 🔒 Load lock-screen toggle
+      final prefs = await SharedPreferences.getInstance();
+      lockScreenEnabled = prefs.getBool('lock_enabled') ?? false;
+
+      // 2️⃣ Location
       final position = await LocationService.getUserLocation();
-      // locationName = await LocationNameService.getLocationName(
-      //   position.latitude,
-      //   position.longitude,
-      // );
       final fetchedLocationName =
       await LocationNameService.getLocationName(
         position.latitude,
@@ -101,7 +108,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
         locationName = fetchedLocationName;
       });
 
-
+      // 3️⃣ Fetch prayer times
       final times = await PrayerApiService.getPrayerTimes(
         latitude: position.latitude,
         longitude: position.longitude,
@@ -109,19 +116,20 @@ class _PrayerScreenState extends State<PrayerScreen> {
         school: selectedMadhab.schoolValue,
         offsetMinutes: offsetMinutes,
       );
+
+      // Remove Sunset (same as Maghrib)
       times.remove('Sunset');
-      // 💾 Save for offline use
+
+      // 💾 Cache for offline
       await PrayerCacheService.savePrayerTimes(
         times,
         DateTime.now(),
       );
 
-      // 🔔 Notifications
-      await NotificationService.cancelAllNotifications();
-      // 🔔 Notifications
+      // 🔔 Clear old notifications (ONCE)
       await NotificationService.cancelAllNotifications();
 
-// 1️⃣ Prayer notifications
+      // 4️⃣ Prayer notifications
       times.forEach((prayerName, prayerTime) {
         final parsed = DateFormat('HH:mm').parse(prayerTime);
         final scheduled = nextOccurrence(DateTime(
@@ -138,13 +146,11 @@ class _PrayerScreenState extends State<PrayerScreen> {
           body: "It is time for $prayerName prayer 🕌",
           scheduledDate: scheduled,
         );
-
       });
 
-// 2️⃣ 🌙 Ramadan notifications (ONCE, outside loop)
+      // 5️⃣ 🌙 Ramadan notifications (ONCE, outside loop)
       if (settings.ramadanNotificationsEnabled &&
           RamadanUtils.isRamadanToday()) {
-
         final now = DateTime.now();
 
         // 🥣 Suhoor
@@ -197,15 +203,16 @@ class _PrayerScreenState extends State<PrayerScreen> {
         }
       }
 
-
-
+      // 6️⃣ Update UI
       setState(() {
         prayerTimes = times;
         loading = false;
         status = null;
       });
 
+      // 7️⃣ Countdown + lock-screen update handled here
       _startNextPrayerCountdown(times);
+
     } catch (_) {
       // 🌐 Online failed → try offline
       final cached = await PrayerCacheService.loadPrayerTimes();
@@ -226,6 +233,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
       }
     }
   }
+
 
   // ⏳ Countdown logic
   void _startNextPrayerCountdown(Map<String, String> times) {
@@ -249,8 +257,18 @@ class _PrayerScreenState extends State<PrayerScreen> {
             _nextPrayerName = entry.key;
             _timeUntilNextPrayer = timeToday.difference(now);
           });
+
+          // 🔒 Lock-screen persistent notification (OPTIONAL)
+          if (lockScreenEnabled && prayerTimes != null) {
+            NotificationService.showPersistentNextPrayer(
+              prayer: entry.key,
+              time: times[entry.key]!,
+            );
+          }
+
           return;
         }
+
       }
 
       final first = times.entries.first;
