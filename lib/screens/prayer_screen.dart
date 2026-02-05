@@ -328,9 +328,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
 
     return Scaffold(
       appBar: AppBar(
-       // backgroundColor: Colors.white.withOpacity(0.12),
-        backgroundColor: Colors.lightGreen[300],
-
+        backgroundColor: Colors.teal,
         elevation: 0,
         title: const Text(
           "Prayer Times",
@@ -341,28 +339,49 @@ class _PrayerScreenState extends State<PrayerScreen> {
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
+          // 🧭 Qibla (keep visible)
           IconButton(
-            tooltip: 'Calendar',
-            icon: const Icon(Icons.calendar_month),
-            onPressed: () => Navigator.pushNamed(context, '/calendar'),
+            icon: const Icon(Icons.explore),
+            onPressed: () => Navigator.pushNamed(context, '/qibla'),
           ),
           IconButton(
-            tooltip: 'Zikirmatik',
-            icon:const Icon(Icons.blur_circular),
-            // 🧿
+            icon: Image.asset(
+              'assets/tesbih.png',
+              width: 26,
+              height: 26,
+              color: null, // remove this if image is already colored
+            ),
+            tooltip: "Zikirmatik",
             onPressed: () => Navigator.pushNamed(context, '/zikr'),
           ),
-          IconButton(
-            tooltip: 'Settings',
-            icon: const Icon(Icons.settings),
-            onPressed: () async {
-              await Navigator.pushNamed(context, '/settings');
-              loadSettingsAndPrayerTimes();
+
+
+
+          // ⋮ More menu
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: Colors.white),
+            onSelected: (value) async {
+              if (value == 'calendar') {
+                Navigator.pushNamed(context, '/calendar');
+              } else if (value == 'settings') {
+                await Navigator.pushNamed(context, '/settings');
+                loadSettingsAndPrayerTimes();
+              }
             },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'calendar',
+                child: Text('Calendar'),
+              ),
+              const PopupMenuItem(
+                value: 'settings',
+                child: Text('Settings'),
+              ),
+            ],
           ),
         ],
-
       ),
+
 
       body: Container(
         decoration: const BoxDecoration(

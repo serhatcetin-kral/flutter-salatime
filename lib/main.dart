@@ -8,6 +8,8 @@ import 'screens/settings_screen.dart';
 import 'screens/splash_screen.dart';
 import 'services/notification_service.dart';
 import 'screens/zikr_screen.dart';
+import 'screens/qibla_screen.dart';
+import 'screens/qibla_compass_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,6 +42,10 @@ class MyApp extends StatelessWidget {
         '/settings': (context) => const SettingsScreen(),
         '/calendar': (context) => const CalendarScreen(),
         '/zikr': (context) => const ZikrScreen(),
+        '/qibla': (context) => const QiblaScreen(),//google icindi beklettim sensor kullandim
+        '/qibla': (context) => const QiblaCompassScreen(),
+
+
 
 
       },

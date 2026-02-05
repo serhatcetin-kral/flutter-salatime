@@ -10,6 +10,12 @@
 			<string>remote-notification</string>
 		</array>
 		<key>NSLocationWhenInUseUsageDescription</key>
+        <string>This app needs your location to calculate Qibla direction.</string>
+
+        <key>NSMotionUsageDescription</key>
+        <string>This app uses motion sensors to show Qibla direction.</string>
+
+		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>This app needs your location to calculate accurate prayer times.</string>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
