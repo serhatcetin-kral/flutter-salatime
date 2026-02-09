@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/calculation_method.dart';
 import '../models/madhhab_type.dart';
 import '../models/settings_models.dart';
+import '../services/prayer_cache_service.dart';
 import '../services/settings_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -67,9 +68,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     await SettingsService.saveSettings(settings);
-
+    await PrayerCacheService.clear();
     if (mounted) {
-      Navigator.pop(context);
+      Navigator.pop(context,true);
     }
   }
 
@@ -124,7 +125,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     items: CalculationMethod.values.map((method) {
                       return DropdownMenuItem(
                         value: method,
-                        child: Text(method.name),
+                        child: Text(method.displayName),
                       );
                     }).toList(),
                     onChanged: (value) {

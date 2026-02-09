@@ -1,22 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/zikr_model.dart';
 import '../services/zikr_service.dart';
 
+
 class ZikrScreen extends StatefulWidget {
-
   const ZikrScreen({super.key});
-
-
 
   @override
   State<ZikrScreen> createState() => _ZikrScreenState();
 }
 
-class _ZikrScreenState extends State<ZikrScreen> {
-  final List<ZikrModel> _zikrList = [
-
-
-
+class _ZikrScreenState extends State<ZikrScreen>
+    with SingleTickerProviderStateMixin {
+  final List<ZikrModel> _zikrList = const [
     ZikrModel(
       id: 'subhanallah',
       arabic: 'سُبْحَانَ ٱللَّٰه',
@@ -42,32 +39,52 @@ class _ZikrScreenState extends State<ZikrScreen> {
       arabic: 'لَا إِلَٰهَ إِلَّا ٱللَّٰه',
       english: 'La ilaha illallah',
     ),
-  ];final ZikrModel _otherZikr = const ZikrModel(
-    id: 'other',
-    arabic: 'Other',
-    english: 'Other',
-  );
-  ZikrModel? _customZikr;
+    const ZikrModel(
+      id: 'other',
+      arabic: '—',
+      english: 'Other',
+    ),
+
+  ];
 
   late ZikrModel _currentZikr;
- // ZikrModel?_customZikr;
   int _count = 0;
   int _target = 33;
   bool _completed = false;
   bool _loading = true;
 
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
   @override
   void initState() {
     super.initState();
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+    );
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
+      CurvedAnimation(
+        parent: _pulseController,
+        curve: Curves.easeOut,
+      ),
+    );
+
     _loadZikr();
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadZikr() async {
     final savedCount = await ZikrService.loadCount();
     final savedZikrId = await ZikrService.loadZikrId();
     final savedTarget = await ZikrService.loadTarget();
-    final custom = await ZikrService.loadCustomZikr();
-
 
     setState(() {
       _count = savedCount;
@@ -75,25 +92,28 @@ class _ZikrScreenState extends State<ZikrScreen> {
       _completed = _count >= _target;
       _currentZikr = _zikrList.firstWhere(
             (z) => z.id == savedZikrId,
-        orElse: () => _customZikr ?? _zikrList.first,
+        orElse: () => _zikrList.first,
       );
-
       _loading = false;
-      if (custom != null) {
-        _customZikr = custom;
-      }
-
     });
-
   }
 
   void _increment() {
     if (_completed) return;
 
+    // ✅ iOS-reliable haptic
+    HapticFeedback.selectionClick();
+
+    _pulseController.forward(from: 0);
+
     setState(() {
       _count++;
-      if (_count >= _target) {
+
+      if (_count >= _target && !_completed) {
         _completed = true;
+
+        // 🎉 Stronger completion haptic (iOS works better with this)
+        HapticFeedback.mediumImpact();
       }
     });
 
@@ -101,9 +121,11 @@ class _ZikrScreenState extends State<ZikrScreen> {
   }
 
 
+
   void _reset() {
     setState(() {
       _count = 0;
+      _completed = false;
     });
     ZikrService.reset();
   }
@@ -112,6 +134,7 @@ class _ZikrScreenState extends State<ZikrScreen> {
     setState(() {
       _currentZikr = zikr;
       _count = 0;
+      _completed = false;
     });
     ZikrService.saveZikrId(zikr.id);
     ZikrService.reset();
@@ -126,165 +149,162 @@ class _ZikrScreenState extends State<ZikrScreen> {
     }
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Dhikr counter'),
+        title: const Text("Zikirmatik"),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFF102027),
-              Color(0xFF1E3C45),
-              Color(0xFF2E5964),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+      extendBodyBehindAppBar: true,
+      body: SizedBox.expand(
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF102027),
+                Color(0xFF1E3C45),
+                Color(0xFF2E5964),
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child:SingleChildScrollView(
-          child: Column(
-            children: [
-              // Zikr selector
-              DropdownButtonFormField<ZikrModel>(
-                value: _currentZikr,
-                dropdownColor: Colors.white,
-                decoration: const InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(),
-                  labelText: 'Select Zikr',
-                ),
-                items: [
-                  ..._zikrList.map((z) => DropdownMenuItem(
-                    value: z,
-                    child: Text(z.english),
-                  )),
-                  DropdownMenuItem(
-                    value: _otherZikr,
-                    child: const Text("Other (Custom)"),
-                  ),
-                ],
-                onChanged: (value) {
-                  if (value == null) return;
-
-                  setState(() {
-                    _currentZikr = value;
-                    _count = 0;
-                    _completed = false;
-                  });
-
-                  ZikrService.reset();
-                },
-              ),
-
-
-              const SizedBox(height: 30),
-
-              // Arabic text
-              Text(
-                _currentZikr.arabic,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 28,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // English
-              Text(
-                _currentZikr.english,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.white70,
-                ),
-              ),
-
-              const SizedBox(height: 40),
-// 🎯 Target selector
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 8,
-                runSpacing: 8,
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
                 children: [
-                  _targetChip(33),
-                  _targetChip(99),
-                  _targetChip(100),
-                  _customTargetButton(),
+                  DropdownButtonFormField<ZikrModel>(
+                    value: _currentZikr,
+                    dropdownColor: Colors.white,
+                    decoration: const InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(),
+                      labelText: 'Select Zikr',
+                    ),
+                    items: _zikrList.map((z) {
+                      return DropdownMenuItem(
+                        value: z,
+                        child: Text(z.english),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value != null) _changeZikr(value);
+                    },
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  if (_currentZikr.id != 'other')
+                    Text(
+                      _currentZikr.arabic,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+
+                  const SizedBox(height: 12),
+
+                  Text(
+                    _currentZikr.english,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.white70,
+                    ),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _targetChip(33),
+                      const SizedBox(width: 8),
+                      _targetChip(99),
+                      const SizedBox(width: 8),
+                      _targetChip(100),
+                      const SizedBox(width: 8),
+                      _customTargetButton(),
+                    ],
+                  ),
+
+                  const Spacer(),
+
+                  ScaleTransition(
+                    scale: _pulseAnimation,
+                    child: GestureDetector(
+                      onTap: _increment,
+                      child: Container(
+                        width: 160,
+                        height: 160,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: _completed
+                              ? [
+                            BoxShadow(
+                              color: Colors.greenAccent.withOpacity(0.8),
+                              blurRadius: 30,
+                              spreadRadius: 6,
+                            ),
+                          ]
+                              : [],
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          _count.toString(),
+                          style: const TextStyle(
+                            fontSize: 48,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.teal,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  if (_completed)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 14),
+                      child: Text(
+                        "✔ Target completed",
+                        style: TextStyle(
+                          color: Colors.greenAccent,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+
+                  const SizedBox(height: 20),
+
+                  TextButton(
+                    onPressed: _reset,
+                    child: const Text(
+                      'Reset',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ),
                 ],
               ),
-
-
-              const SizedBox(height: 24),
-
-              // Counter
-              GestureDetector(
-                onTap: _increment,
-                child: Container(
-                  width: 160,
-                  height: 160,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    _count.toString(),
-                    style: const TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.teal,
-                    ),
-                  ),
-                ),
-              ),
-              if (_completed)
-                const Padding(
-                  padding: EdgeInsets.only(top: 12),
-                  child: Text(
-                    "✔ Target completed",
-                    style: TextStyle(
-                      color: Colors.greenAccent,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-
-              const SizedBox(height: 20),
-
-              TextButton(
-                onPressed: _reset,
-                child: const Text(
-                  'Reset',
-                  style: TextStyle(color: Colors.white70),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
         ),
       ),
     );
   }
+
   Widget _targetChip(int value) {
     final isSelected = _target == value;
 
     return ChoiceChip(
-      label: Text(
-        value.toString(),
-        style: TextStyle(
-          color: isSelected ? Colors.white : Colors.black,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+      label: Text(value.toString()),
       selected: isSelected,
-      selectedColor: Colors.teal,
-      backgroundColor: Colors.white,
       onSelected: (_) {
         setState(() {
           _target = value;
@@ -296,7 +316,6 @@ class _ZikrScreenState extends State<ZikrScreen> {
       },
     );
   }
-
 
   Widget _customTargetButton() {
     return IconButton(
@@ -345,54 +364,4 @@ class _ZikrScreenState extends State<ZikrScreen> {
       },
     );
   }
-  Future<void> _addCustomZikr() async {
-    final controller = TextEditingController();
-
-    final result = await showDialog<String>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Custom Zikr"),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            hintText: "Enter zikr (any language)",
-          ),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (controller.text.trim().isNotEmpty) {
-                Navigator.pop(context, controller.text.trim());
-              }
-            },
-            child: const Text("Save"),
-          ),
-        ],
-      ),
-    );
-
-    if (result != null) {
-      final custom = ZikrModel(
-        id: 'custom_user',
-        arabic: result,   // same text
-        english: result,  // same text
-      );
-
-      await ZikrService.saveCustomZikr(result, result);
-
-      setState(() {
-        _customZikr = custom;
-        _currentZikr = custom;
-        _count = 0;
-        _completed = false;
-      });
-    }
-  }
-
-
 }

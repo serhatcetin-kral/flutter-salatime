@@ -30,4 +30,10 @@ class PrayerCacheService {
     final prefs = await SharedPreferences.getInstance();
     return prefs.containsKey(_keyTimes);
   }
+  static Future<void> clear() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('cached_prayer_times');
+    await prefs.remove('cached_prayer_date');
+  }
+
 }

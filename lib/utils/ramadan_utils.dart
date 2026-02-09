@@ -1,12 +1,12 @@
 import 'package:hijri/hijri_calendar.dart';
 
 class RamadanUtils {
-  // static bool isRamadanToday() {
-  //   final hijri = HijriCalendar.now();
-  //   return hijri.hMonth == 9;
-  // }
-  //   // 🧪 FORCE Ramadan for testing
-static bool isRamadanToday() => true;
+  static bool isRamadanToday() {
+    final hijri = HijriCalendar.now();
+    return hijri.hMonth == 9;
+  }
+    // 🧪 FORCE Ramadan for testing
+//static bool isRamadanToday() => true;
 static int remainingRamadanDays() {
   final today = HijriCalendar.now();
 

@@ -339,47 +339,25 @@ class _PrayerScreenState extends State<PrayerScreen> {
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          // 🧭 Qibla (keep visible)
+
           IconButton(
-            icon: const Icon(Icons.explore),
-            onPressed: () => Navigator.pushNamed(context, '/qibla'),
-          ),
-          IconButton(
-            icon: Image.asset(
-              'assets/tesbih.png',
-              width: 26,
-              height: 26,
-              color: null, // remove this if image is already colored
-            ),
-            tooltip: "Zikirmatik",
-            onPressed: () => Navigator.pushNamed(context, '/zikr'),
-          ),
+            icon: const Icon(Icons.settings),
+            onPressed: () async {
+              final changed = await Navigator.pushNamed(context, '/settings');
 
-
-
-          // ⋮ More menu
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: Colors.white),
-            onSelected: (value) async {
-              if (value == 'calendar') {
-                Navigator.pushNamed(context, '/calendar');
-              } else if (value == 'settings') {
-                await Navigator.pushNamed(context, '/settings');
-                loadSettingsAndPrayerTimes();
+              if (changed == true) {
+                await loadSettingsAndPrayerTimes(); // 🔄 refetch with new madhhab
               }
             },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'calendar',
-                child: Text('Calendar'),
-              ),
-              const PopupMenuItem(
-                value: 'settings',
-                child: Text('Settings'),
-              ),
-            ],
           ),
-        ],
+
+          IconButton(
+              icon: const Icon(Icons.more_vert),
+              onPressed: () => Navigator.pushNamed(context, '/menu'),
+            ),
+          ],
+
+
       ),
 
 
