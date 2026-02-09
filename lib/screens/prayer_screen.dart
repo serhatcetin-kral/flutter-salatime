@@ -329,6 +329,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.teal,
+        foregroundColor: Colors.white,
         elevation: 0,
         title: const Text(
           "Prayer Times",

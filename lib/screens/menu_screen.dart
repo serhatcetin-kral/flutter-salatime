@@ -5,6 +5,7 @@ import '../screens/zikr_screen.dart';
 import '../screens/calendar_screen.dart';
 import '../screens/qibla_compass_screen.dart';
 import '../screens/about_screen.dart';
+import 'dua_screen.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
@@ -18,10 +19,13 @@ class MenuScreen extends StatelessWidget {
         return const QiblaCompassScreen();
       case '/about':
         return const AboutScreen();
+      case '/duas':
+        return const DuaScreen();
       default:
         return const SizedBox();
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +61,14 @@ class MenuScreen extends StatelessWidget {
               subtitle: "Direction of the Kaaba",
               route: '/qibla',
             ),
+            _menuTile(
+              context,
+              icon: Icons.menu_book,
+              title: "Duas",
+              subtitle: "Daily supplications",
+              route: '/duas',
+            ),
+
 
             _menuTile(
               context,

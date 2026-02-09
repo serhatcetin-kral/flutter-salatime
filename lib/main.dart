@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:salah_prayer_time/screens/dua_screen.dart';
 import 'screens/calendar_screen.dart';
 
 import 'theme/app_theme.dart';
@@ -48,6 +49,8 @@ class MyApp extends StatelessWidget {
         '/qibla': (context) => const QiblaCompassScreen(),
         '/menu': (context) => const MenuScreen(),
         '/about': (context) => const AboutScreen(),
+        '/duas': (context) => const DuaScreen(),
+
 
 
 
