@@ -77,7 +77,7 @@ class AboutScreen extends StatelessWidget {
                   child: Column(
                     children: const [
                       Text(
-                        "Version 1.0.0",
+                        "Version 1.0.0+1",
                         style: TextStyle(
                           color: Colors.white70,
                           fontSize: 13,

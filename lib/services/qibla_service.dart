@@ -4,7 +4,7 @@ class QiblaService {
   static const double kaabaLat = 21.4225;
   static const double kaabaLng = 39.8262;
 
-  /// Returns bearing from true north (0-360 degrees)
+  /// Bearing from true north (0-360 degrees)
   static double bearingToKaaba({
     required double userLat,
     required double userLng,
@@ -17,13 +17,10 @@ class QiblaService {
     final dLng = kaabaLngRad - userLngRad;
 
     final y = sin(dLng);
-    final x = cos(userLatRad) * tan(kaabaLatRad) -
-        sin(userLatRad) * cos(dLng);
+    final x = cos(userLatRad) * tan(kaabaLatRad) - sin(userLatRad) * cos(dLng);
 
     final bearingRad = atan2(y, x);
-    final bearingDeg = (_radToDeg(bearingRad) + 360) % 360;
-
-    return bearingDeg;
+    return (_radToDeg(bearingRad) + 360) % 360;
   }
 
   static double _degToRad(double deg) => deg * pi / 180.0;

@@ -15,11 +15,25 @@ class PrayerCacheService {
     await prefs.setString(_keyDate, date.toIso8601String());
   }
 
-  /// Load cached prayer times
+  /// Load cached prayer times (ONLY if for today)
   static Future<Map<String, String>?> loadPrayerTimes() async {
     final prefs = await SharedPreferences.getInstance();
+
     final json = prefs.getString(_keyTimes);
-    if (json == null) return null;
+    final dateString = prefs.getString(_keyDate);
+
+    if (json == null || dateString == null) return null;
+
+    final cachedDate = DateTime.parse(dateString);
+    final now = DateTime.now();
+
+    // ⭐ Check if cache is from today
+    final isSameDay =
+        cachedDate.year == now.year &&
+            cachedDate.month == now.month &&
+            cachedDate.day == now.day;
+
+    if (!isSameDay) return null;
 
     final Map<String, dynamic> decoded = jsonDecode(json);
     return decoded.map((k, v) => MapEntry(k, v.toString()));
@@ -30,10 +44,11 @@ class PrayerCacheService {
     final prefs = await SharedPreferences.getInstance();
     return prefs.containsKey(_keyTimes);
   }
+
+  /// Clear cache manually
   static Future<void> clear() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('cached_prayer_times');
-    await prefs.remove('cached_prayer_date');
+    await prefs.remove(_keyTimes);
+    await prefs.remove(_keyDate);
   }
-
 }

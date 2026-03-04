@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:salah_prayer_time/screens/qibla_map_screen.dart';
+import 'package:salah_prayer_time/screens/qibla_selector_screen.dart';
 import '../utils/page_transition.dart';
 import '../screens/about_screen.dart';
 import '../screens/zikr_screen.dart';

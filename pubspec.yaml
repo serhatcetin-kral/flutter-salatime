@@ -7,21 +7,58 @@ version: 1.0.0+1
 environment:
   sdk: ">=3.10.0 <4.0.0"
 
+#dependencies:
+#  flutter:
+#    sdk: flutter
+#dependencies:
+#  flutter:
+#    sdk: flutter
+#
+#  flutter_compass: ^0.8.1
+#  vibration: ^3.1.5
+#
+#
+#  geocoding: ^2.2.0
+#  hijri: ^3.0.0
+#  table_calendar: ^3.1.2
+#
+#
+#
+#  # 🌍 Localization
+#  flutter_localizations:
+#    sdk: flutter
+#  intl: ^0.20.2
+#
+#  # 🔔 Notifications
+#  flutter_local_notifications: ^17.1.2
+#  timezone: ^0.9.2
+#
+#  # 🌐 Network & storage
+#  http: ^1.1.0
+#  shared_preferences: ^2.2.0
+#
+#  # 📍 Location & Maps
+#  geolocator: ^9.0.2
+#  google_maps_flutter: ^2.4.0
+#  flutter_polyline_points: ^3.1.0
+#
+#  # 🍎 iOS icons
+#  cupertino_icons: ^1.0.8
+#  flutter_native_splash: ^2.4.7
 dependencies:
   flutter:
     sdk: flutter
 
+  # Core Utilities
+  shared_preferences: ^2.3.5
+  device_info_plus: ^11.3.0
   flutter_compass: ^0.8.1
   vibration: ^3.1.5
-
-
   geocoding: ^2.2.0
   hijri: ^3.0.0
   table_calendar: ^3.1.2
 
-
-
-    # 🌍 Localization
+  # 🌍 Localization
   flutter_localizations:
     sdk: flutter
   intl: ^0.20.2
@@ -30,18 +67,17 @@ dependencies:
   flutter_local_notifications: ^17.1.2
   timezone: ^0.9.2
 
-  # 🌐 Network & storage
+  # 🌐 Network
   http: ^1.1.0
-  shared_preferences: ^2.2.0
 
   # 📍 Location & Maps
   geolocator: ^9.0.2
   google_maps_flutter: ^2.4.0
   flutter_polyline_points: ^3.1.0
 
-  # 🍎 iOS icons
+  # 🍎 iOS icons & UI
   cupertino_icons: ^1.0.8
-
+  flutter_native_splash: ^2.4.7
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -49,7 +85,6 @@ dev_dependencies:
 
   # 🎨 App icons & splash
   flutter_launcher_icons: ^0.14.4
-  flutter_native_splash: ^2.2.16
 
 flutter:
   uses-material-design: true
@@ -61,11 +96,18 @@ flutter:
 flutter_icons:
   android: true
   ios: true
-  image_path: assets/app_icon.png
+  image_path: assets/splash_logo.png
 
 # 💦 Splash screen
+# 💦 Splash screen
 flutter_native_splash:
-  color: "#2EC4B6"
+  color: "#1ABC9C"
   image: assets/splash_logo.png
   android: true
   ios: true
+
+  android_12:
+    color: "#1ABC9C"
+    image: assets/splash_logo.png
+    # Adding this helps force Android to use the new file
+    icon_backgroundColor: "#1ABC9C"

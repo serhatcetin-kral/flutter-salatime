@@ -1,9 +1,10 @@
 enum CalculationMethod {
-  isna,
-  mwl,
-  egypt,
-  makkah,
-  turkish,
+  isna,     // API ID: 2
+  mwl,      // API ID: 3
+  egypt,    // API ID: 5
+  makkah,   // API ID: 4 (Umm al-Qura)
+  turkish,  // API ID: 13 (Diyanet)
+  karachi,  // API ID: 1
 }
 
 // int getMethodId(CalculationMethod method) {
@@ -33,6 +34,8 @@ extension CalculationMethodExtension on CalculationMethod {
         return "Makkah (Umm al-Qura)";
       case CalculationMethod.turkish:
         return "Turkish (Diyanet)";
+      case CalculationMethod.karachi:
+        return "Karachi";
     }
   }
 }
@@ -50,6 +53,8 @@ int getMethodId(CalculationMethod method) {
       return 4;
     case CalculationMethod.turkish:
       return 13;
+    case CalculationMethod.karachi:
+      return 1;
   }
 }
 

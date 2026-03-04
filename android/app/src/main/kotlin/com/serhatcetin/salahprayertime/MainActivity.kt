@@ -1,4 +1,5 @@
-package com.example.salah_prayer_time
+package com.serhatcetin.salahprayertime
+
 
 import io.flutter.embedding.android.FlutterActivity
 

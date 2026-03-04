@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 
-import '../utils/holy_day_utils.dart';
-import '../models/holy_day.dart';
-
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
 
@@ -22,45 +19,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
     _focusedGregorianMonth = DateTime(now.year, now.month, 1);
   }
 
-  void _nextMonth() {
-    setState(() {
-      _focusedGregorianMonth =
-          DateTime(_focusedGregorianMonth.year, _focusedGregorianMonth.month + 1, 1);
-    });
-  }
+  void _nextMonth() => setState(() => _focusedGregorianMonth = DateTime(_focusedGregorianMonth.year, _focusedGregorianMonth.month + 1, 1));
+  void _previousMonth() => setState(() => _focusedGregorianMonth = DateTime(_focusedGregorianMonth.year, _focusedGregorianMonth.month - 1, 1));
 
-  void _previousMonth() {
-    setState(() {
-      _focusedGregorianMonth =
-          DateTime(_focusedGregorianMonth.year, _focusedGregorianMonth.month - 1, 1);
-    });
-  }
-
-  String _gregorianMonthLabel() =>
-      DateFormat('MMMM yyyy').format(_focusedGregorianMonth);
-
-  String _hijriMonthLabel() {
-    final hijri = HijriCalendar.fromDate(_focusedGregorianMonth);
-    return "${hijri.longMonthName} ${hijri.hYear} AH";
-  }
-
-  List<DateTime?> _buildGregorianCells() {
-    final cells = <DateTime?>[];
-    final firstDay = _focusedGregorianMonth;
-    final daysInMonth =
-        DateTime(firstDay.year, firstDay.month + 1, 0).day;
-
-    final startOffset = firstDay.weekday - 1;
-
-    for (int i = 0; i < startOffset; i++) {
-      cells.add(null);
-    }
-
-    for (int d = 1; d <= daysInMonth; d++) {
-      cells.add(DateTime(firstDay.year, firstDay.month, d));
-    }
-
-    return cells;
+  // 🕌 HOLY EVENT ENGINE
+  Map<String, dynamic>? _getIslamicEvent(HijriCalendar h) {
+    if (h.hMonth == 10 && h.hDay == 1) return {"name": "Eid al-Fitr", "type": "eid", "color": Colors.amberAccent};
+    if (h.hMonth == 12 && h.hDay == 10) return {"name": "Eid al-Adha", "type": "eid", "color": Colors.amberAccent};
+    if (h.hMonth == 9 && h.hDay == 1) return {"name": "Ramadan Begins", "type": "ramadan", "color": Colors.orangeAccent};
+    if (h.hMonth == 9 && h.hDay == 27) return {"name": "Laylat al-Qadr", "type": "night", "color": Colors.purpleAccent};
+    if (h.hMonth == 1 && h.hDay == 10) return {"name": "Ashura", "type": "night", "color": Colors.blueAccent};
+    return null;
   }
 
   @override
@@ -68,169 +37,114 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final cells = _buildGregorianCells();
     final today = DateTime.now();
 
+    // Logic to find events in the CURRENT focused month to show in the bottom list
+    final List<Map<String, dynamic>> monthlyEvents = [];
+    for (var date in cells) {
+      if (date != null) {
+        final h = HijriCalendar.fromDate(date);
+        final event = _getIslamicEvent(h);
+        if (event != null) {
+          monthlyEvents.add({
+            "name": event['name'],
+            "date": "${date.day} ${DateFormat('MMM').format(date)} / ${h.hDay} ${h.longMonthName}",
+            "color": event['color']
+          });
+        }
+      }
+    }
+
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text("Islamic Calendar")),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(12),
+      backgroundColor: const Color(0xFF0F2027),
+      appBar: AppBar(
+        title: const Text("Islamic Calendar", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF0F2027), Color(0xFF2C5364)],
+            begin: Alignment.topCenter, end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
           child: Column(
             children: [
-              // 🌙 Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    onPressed: _previousMonth,
-                    icon: const Icon(Icons.chevron_left),
+              _buildMonthHeader(),
+              const SizedBox(height: 10),
+              _buildWeekdayLabels(),
+
+              // 📅 CALENDAR GRID (Reduced height to prevent overflow)
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.45,
+                child: GridView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: cells.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 7,
+                    crossAxisSpacing: 6,
+                    mainAxisSpacing: 6,
                   ),
-                  Column(
-                    children: [
-                      Text(
-                        _hijriMonthLabel(),
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        _gregorianMonthLabel(),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    onPressed: _nextMonth,
-                    icon: const Icon(Icons.chevron_right),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // Weekdays
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: const [
-                  Text("Mon"),
-                  Text("Tue"),
-                  Text("Wed"),
-                  Text("Thu"),
-                  Text("Fri", style: TextStyle(color: Colors.blue)),
-                  Text("Sat"),
-                  Text("Sun"),
-                ],
-              ),
-
-              const SizedBox(height: 8),
-
-              // Calendar grid
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: cells.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  crossAxisSpacing: 6,
-                  mainAxisSpacing: 6,
-                  childAspectRatio: 1,
-                ),
                   itemBuilder: (context, index) {
                     final date = cells[index];
                     if (date == null) return const SizedBox.shrink();
 
                     final hijri = HijriCalendar.fromDate(date);
-                    final holyDay = HolyDayUtils.getHolyDay(hijri);
+                    final event = _getIslamicEvent(hijri);
+                    final bool isToday = DateUtils.isSameDay(date, today);
 
-                    final isToday = DateUtils.isSameDay(date, DateTime.now());
-                    final isFriday = date.weekday == DateTime.friday;
-                    final isRamadan = hijri.hMonth == 9;
-
-                    Color bgColor = Colors.white;
-
-                    if (holyDay?.isEid == true) {
-                      bgColor = const Color(0xFFE8F5E9); // 🟢 Eid
-                    } else if (holyDay?.isNight == true) {
-                      bgColor = const Color(0xFFF3E5F5); // 🟣 Holy night
-                    } else if (isRamadan) {
-                      bgColor = const Color(0xFFFFF8E1); // 🟠 Ramadan
-                    } else if (isToday) {
-                      bgColor = const Color(0xFFB2DFDB); // Today
-                    } else if (isFriday) {
-                      bgColor = const Color(0xFFE3F2FD); // Friday
-                    }
-
-                    return GestureDetector(
-                      onTap: holyDay == null
-                          ? null
-                          : () => _showHolyDayDetails(context, holyDay),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: bgColor,
-                          borderRadius: BorderRadius.circular(10),
-                          border: holyDay != null
-                              ? Border.all(color: Colors.deepOrangeAccent)
-                              : null,
-                        ),
-                        padding: const EdgeInsets.all(4),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "${hijri.hDay}",
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              "${date.day}",
-                              style: const TextStyle(
-                                fontSize: 9,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            if (holyDay != null)
-                              Flexible(
-                                child: Text(
-                                  holyDay.name,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.w600,
-                                    color: holyDay.isEid
-                                        ? Colors.green
-                                        : Colors.deepPurple,
-                                  ),
-                                ),
-                              ),
-                          ],
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: isToday ? Colors.teal.withOpacity(0.3) : Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isToday ? Colors.tealAccent : (event != null ? event['color'] : Colors.transparent),
+                          width: 1,
                         ),
                       ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text("${date.day}", style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                          Text("${hijri.hDay}", style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10)),
+                        ],
+                      ),
                     );
-                  }
-
+                  },
+                ),
               ),
 
-              const SizedBox(height: 12),
-
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 10,
-                children: [
-                  _legend(const Color(0xFFB2DFDB), "Today"),
-                  _legend(const Color(0xFFE3F2FD), "Friday"),
-                  _legend(const Color(0xFFFFF8E1), "Ramadan"),
-                  _legend(const Color(0xFFF3E5F5), "Holy Night"),
-                  _legend(const Color(0xFFE8F5E9), "Eid"),
-                ],
+              // 📜 STABLE EVENTS LIST (Prevents 17px Overflow)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text("Holy Events this Month", style: TextStyle(color: Colors.tealAccent, fontWeight: FontWeight.bold, fontSize: 14)),
+                ),
               ),
 
+              Expanded(
+                child: monthlyEvents.isEmpty
+                    ? const Center(child: Text("No major events this month", style: TextStyle(color: Colors.white38)))
+                    : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: monthlyEvents.length,
+                  itemBuilder: (context, index) {
+                    final e = monthlyEvents[index];
+                    return Card(
+                      color: Colors.white.withOpacity(0.05),
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        leading: Icon(Icons.star, color: e['color'], size: 18),
+                        title: Text(e['name'], style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                        trailing: Text(e['date'], style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                      ),
+                    );
+                  },
+                ),
+              ),
             ],
           ),
         ),
@@ -238,55 +152,45 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  void _showHolyDayDetails(BuildContext context, HolyDay day) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              day.name,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(day.description),
-            if (day.isNight)
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text(
-                  "Begins after Maghrib",
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ),
-          ],
-        ),
+  Widget _buildMonthHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(onPressed: _previousMonth, icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 18)),
+          Column(
+            children: [
+              Text(DateFormat('MMMM yyyy').format(_focusedGregorianMonth), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              Text("${HijriCalendar.fromDate(_focusedGregorianMonth).longMonthName} ${HijriCalendar.fromDate(_focusedGregorianMonth).hYear} AH",
+                  style: const TextStyle(color: Colors.tealAccent, fontSize: 12)),
+            ],
+          ),
+          IconButton(onPressed: _nextMonth, icon: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18)),
+        ],
       ),
     );
   }
 
-  Widget _legend(Color color, String label) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 14,
-          height: 14,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(4),
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(label),
-      ],
+  Widget _buildWeekdayLabels() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+            .map((d) => Text(d, style: const TextStyle(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.bold)))
+            .toList(),
+      ),
     );
+  }
+
+  List<DateTime?> _buildGregorianCells() {
+    final cells = <DateTime?>[];
+    final firstDay = _focusedGregorianMonth;
+    final daysInMonth = DateTime(firstDay.year, firstDay.month + 1, 0).day;
+    final startOffset = firstDay.weekday - 1;
+    for (int i = 0; i < startOffset; i++) cells.add(null);
+    for (int d = 1; d <= daysInMonth; d++) cells.add(DateTime(firstDay.year, firstDay.month, d));
+    return cells;
   }
 }

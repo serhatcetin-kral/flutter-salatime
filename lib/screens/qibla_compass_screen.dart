@@ -20,6 +20,7 @@ class _QiblaCompassScreenState extends State<QiblaCompassScreen> {
   double? _heading;
 
   StreamSubscription<CompassEvent>? _subscription;
+  Timer? _timeoutTimer; // ⭐ To detect if sensor is missing (like iOS Simulator)
 
   bool _loading = true;
   String? _error;
@@ -34,6 +35,7 @@ class _QiblaCompassScreenState extends State<QiblaCompassScreen> {
   @override
   void dispose() {
     _subscription?.cancel();
+    _timeoutTimer?.cancel();
     super.dispose();
   }
 
@@ -46,7 +48,19 @@ class _QiblaCompassScreenState extends State<QiblaCompassScreen> {
         userLng: position.longitude,
       );
 
-      _qiblaBearing = bearing;
+      setState(() {
+        _qiblaBearing = bearing;
+      });
+
+      // ⭐ Start a timer to check if the compass sensor actually sends data
+      _timeoutTimer = Timer(const Duration(seconds: 5), () {
+        if (mounted && _heading == null && _error == null) {
+          setState(() {
+            _loading = false;
+            _error = "Compass sensor not detected.\n(Note: iOS Simulators do not support compass hardware)";
+          });
+        }
+      });
 
       _subscription = FlutterCompass.events?.listen((event) {
         if (event.heading == null) return;
@@ -61,16 +75,21 @@ class _QiblaCompassScreenState extends State<QiblaCompassScreen> {
         }
         if (!aligned) _hasVibrated = false;
 
+        if (mounted) {
+          setState(() {
+            _heading = heading;
+            _loading = false;
+            _timeoutTimer?.cancel(); // Received data, cancel the timeout
+          });
+        }
+      });
+    } catch (e) {
+      if (mounted) {
         setState(() {
-          _heading = heading;
           _loading = false;
+          _error = "Unable to access location or compass.";
         });
-      });
-    } catch (_) {
-      setState(() {
-        _loading = false;
-        _error = "Unable to access location or compass.";
-      });
+      }
     }
   }
 
@@ -79,172 +98,124 @@ class _QiblaCompassScreenState extends State<QiblaCompassScreen> {
     final bearing = _qiblaBearing;
     final heading = _heading;
 
-    final kaabaAngle =
-    (bearing != null && heading != null)
+    // Calculate the rotation angle
+    final kaabaAngle = (bearing != null && heading != null)
         ? (bearing - heading) * pi / 180
         : 0.0;
 
-    final isAligned =
-        bearing != null &&
-            heading != null &&
-            (bearing - heading).abs() < 12;
+    final isAligned = bearing != null && heading != null && (bearing - heading).abs() < 12;
 
-    // ⭐ RESPONSIVE SIZE ⭐
-    final double size =
-        MediaQuery.of(context).size.width * 0.7;
+    final double size = MediaQuery.of(context).size.width * 0.7;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Qibla Finder"),
+        title: const Text("Qibla Finder", style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.teal,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0xFF102027),
-              Color(0xFF1E3C45),
-              Color(0xFF2E5964),
-            ],
+            colors: [Color(0xFF102027), Color(0xFF1E3C45), Color(0xFF2E5964)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
         ),
-
-        // ⭐ SCROLLABLE FIX ⭐
         child: SafeArea(
           child: _loading
-              ? const Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          )
+              ? const Center(child: CircularProgressIndicator(color: Colors.white))
               : _error != null
               ? Center(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(30),
               child: Text(
                 _error!,
                 textAlign: TextAlign.center,
-                style:
-                const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.white, fontSize: 16),
               ),
             ),
           )
               : SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight:
-                MediaQuery.of(context).size.height,
-              ),
-              child: Column(
-                mainAxisAlignment:
-                MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 20),
+            physics: const ClampingScrollPhysics(),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: 40),
+                const Text(
+                  "Align your phone towards the Qibla",
+                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 40),
 
-                  const Text(
-                    "Align your phone towards the Qibla",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // 🧭 RESPONSIVE COMPASS
-                  Container(
+                // 🧭 THE COMPASS STACK
+                Center(
+                  child: Container(
                     width: size,
                     height: size,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color:
-                      Colors.black.withOpacity(0.25),
-                      border: Border.all(
-                        color: Colors.white
-                            .withOpacity(0.3),
-                        width: 2,
-                      ),
+                      color: Colors.black.withOpacity(0.25),
+                      border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
                     ),
-                    child: Center(
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Icon(
-                            Icons.navigation,
-                            size: size * 0.3,
-                            color: isAligned
-                                ? Colors.green
-                                : Colors.teal,
-                          ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // The static navigation icon (represents the phone)
+                        Icon(
+                          Icons.navigation,
+                          size: size * 0.3,
+                          color: isAligned ? Colors.greenAccent : Colors.tealAccent,
+                        ),
 
-                          Transform.rotate(
-                            angle: kaabaAngle,
-                            child: Transform.translate(
-                              offset:
-                              Offset(0, -size / 2 + 30),
-                              child: Container(
-                                width: size * 0.2,
-                                height: size * 0.2,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.black,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 2,
-                                  ),
-                                ),
-                                alignment: Alignment.center,
-                                child: const Text(
-                                  "🕋",
-                                  style:
-                                  TextStyle(fontSize: 28),
-                                ),
+                        // The rotating Kaaba pointer
+                        AnimatedRotation(
+                          turns: (kaabaAngle / (2 * pi)),
+                          duration: const Duration(milliseconds: 200),
+                          child: Transform.translate(
+                            offset: Offset(0, -size / 2 + 30),
+                            child: Container(
+                              width: size * 0.2,
+                              height: size * 0.2,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.black,
+                                border: Border.all(color: Colors.white, width: 2),
                               ),
+                              alignment: Alignment.center,
+                              child: const Text("🕋", style: TextStyle(fontSize: 28)),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  if (isAligned)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 16),
-                      child: Text(
-                        "✔ You are facing the Qibla",
-                        style: TextStyle(
-                          color: Colors.greenAccent,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
                         ),
-                      ),
-                    ),
-
-                  const SizedBox(height: 20),
-
-                  if (bearing != null)
-                    Text(
-                      "Qibla direction: ${bearing.toStringAsFixed(1)}°",
-                      style: const TextStyle(
-                        color: Colors.white70,
-                      ),
-                    ),
-
-                  const Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text(
-                      "Move away from metal objects and rotate your phone in a figure-8 for accuracy.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white60,
-                      ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+
+                const SizedBox(height: 30),
+                if (isAligned)
+                  const Text(
+                    "✔ You are facing the Qibla",
+                    style: TextStyle(color: Colors.greenAccent, fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+
+                const SizedBox(height: 20),
+                if (bearing != null)
+                  Text(
+                    "Qibla direction: ${bearing.toStringAsFixed(1)}°",
+                    style: const TextStyle(color: Colors.white70, fontSize: 16),
+                  ),
+
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+                  child: Text(
+                    "Move away from metal objects and rotate your phone in a figure-8 for accuracy.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, color: Colors.white60),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
