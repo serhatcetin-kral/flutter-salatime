@@ -90,10 +90,11 @@ class _DuaScreenState extends State<DuaScreen> {
     }).toList();
 
     return Scaffold(
+
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text("Daily Duas", style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white)),
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.transparent,iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
       ),
       body: Container(

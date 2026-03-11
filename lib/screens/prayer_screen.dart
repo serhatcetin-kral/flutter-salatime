@@ -13,7 +13,7 @@ import '../services/settings_service.dart';
 import '../utils/hijri_utils.dart';
 import '../utils/ramadan_utils.dart';
 import 'dart:convert';
-
+import '../services/notification_service.dart';
 class PrayerScreen extends StatefulWidget {
   const PrayerScreen({super.key});
 
@@ -33,6 +33,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
   @override
   void initState() {
     super.initState();
+
     _loadData();
   }
 
@@ -95,7 +96,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
         school: settings.madhab.schoolValue,
         offsetMinutes: settings.offsetMinutes,
       );
-
+      await NotificationService.scheduleAllPrayerNotifications();
       if (mounted) {
         setState(() {
           locationName = name;
@@ -119,20 +120,37 @@ class _PrayerScreenState extends State<PrayerScreen> {
       final now = DateTime.now();
       final sequence = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
+      DateTime? nextScheduled;
+      String? nextName;
+
+      // 1. Check for the next prayer TODAY
       for (String name in sequence) {
         if (times.containsKey(name)) {
           final parsed = DateFormat("HH:mm").parse(times[name]!);
           final scheduled = DateTime(now.year, now.month, now.day, parsed.hour, parsed.minute);
+
           if (scheduled.isAfter(now)) {
-            if (mounted) {
-              setState(() {
-                _nextPrayerName = name;
-                _timeUntilNextPrayer = scheduled.difference(now);
-              });
-            }
-            return;
+            nextScheduled = scheduled;
+            nextName = name;
+            break; // Found it!
           }
         }
+      }
+
+      // 2. If nothing is left today, the next prayer is FAJR TOMORROW
+      if (nextScheduled == null && times.containsKey('Fajr')) {
+        final parsed = DateFormat("HH:mm").parse(times['Fajr']!);
+        // Add 1 day to the date
+        nextScheduled = DateTime(now.year, now.month, now.day + 1, parsed.hour, parsed.minute);
+        nextName = 'Fajr';
+      }
+
+      // 3. Update the UI
+      if (mounted && nextScheduled != null) {
+        setState(() {
+          _nextPrayerName = nextName;
+          _timeUntilNextPrayer = nextScheduled!.difference(now);
+        });
       }
     });
   }
