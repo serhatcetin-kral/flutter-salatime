@@ -1,0 +1,77 @@
+name: salah_prayer_time
+description: "Simple and modern Salah prayer time app"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.10.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Sharing
+  share_plus: ^7.2.1
+
+  # Core
+  shared_preferences: ^2.3.5
+  device_info_plus: ^11.3.0
+
+  # Sensors & utilities
+  flutter_compass: ^0.8.1
+  vibration: ^3.1.5
+  geocoding: ^2.2.0
+
+  # UI
+  hijri: ^3.0.0
+  table_calendar: ^3.1.2
+
+  # Localization
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
+
+  # 🔔 Notifications (FIXED)
+  flutter_local_notifications: ^17.2.4
+  timezone: ^0.9.4   # ⭐ FIXED VERSION (IMPORTANT)
+
+  # Network
+  http: ^1.1.0
+
+  # Location & maps
+  geolocator: ^9.0.2
+  google_maps_flutter: ^2.4.0
+  flutter_polyline_points: ^3.1.0
+
+  # UI extras
+  cupertino_icons: ^1.0.8
+  flutter_native_splash: ^2.4.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: assets/splash_logo.png
+
+flutter_native_splash:
+  color: "#1ABC9C"
+  image: assets/splash_logo.png
+  android: true
+  ios: true
+
+  android_12:
+    color: "#1ABC9C"
+    image: assets/splash_logo.png
+    icon_backgroundColor: "#1ABC9C"
